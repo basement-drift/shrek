@@ -1,0 +1,4 @@
+giphy_client
+slackbot
+google-api-python-client
+markovify
