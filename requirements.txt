@@ -2,3 +2,6 @@ giphy_client
 slackbot
 google-api-python-client
 markovify
+beautifulsoup4
+readability-lxml
+nltk
