@@ -1,24 +1,24 @@
-FROM python:3.7-alpine
+FROM rocm/tensorflow:rocm3.0-tf1.15-python3
 
 WORKDIR /src
 
-# Install our nltk models early because they cache well
-COPY install_nltk.py .
-RUN pip install nltk && python install_nltk.py
-
-RUN apk update && apk add \
+RUN apt-get update && apt-get install -y \
 	libxml2 \
 	libxml2-dev \
-	libxslt \
-	libxslt-dev \
-	build-base
+	libxslt1.1 \
+	libxslt1-dev
 
 # Install this separately, because it builds slowly
-RUN pip install readability-lxml
+RUN pip3 install readability-lxml
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
+
+# Install our models separately because they cache well
+COPY install_models.py .
+ENV GPT_2_MODEL=774M
+RUN python3 install_models.py
 
 COPY ./ .
 
-ENTRYPOINT ["python", "run.py"]
+ENTRYPOINT ["python3", "run.py"]
