@@ -5,3 +5,4 @@ markovify
 beautifulsoup4
 readability-lxml
 nltk
+gpt-2-simple
