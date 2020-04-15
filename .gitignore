@@ -1,12 +1,6 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+.env
+gpt2/target
 
-# Test binary, build with `go test -c`
-*.test
+# Added by cargo
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+/target
