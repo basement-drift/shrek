@@ -1,12 +1,9 @@
-from bs4 import BeautifulSoup
-from readability import Document
 from slackbot.bot import listen_to
 from slackbot.bot import respond_to
 import markovify
 import nltk.tokenize
 import os
 import threading
-import urllib.request
 import re
 
 
@@ -98,14 +95,6 @@ def merge(text):
         with open(os.environ['MARKOV_MODEL_PATH'], 'w') as f:
             model_json = f.write(text_model.to_json())
 
-
-def extract_text(url):
-    with urllib.request.urlopen(url) as response:
-        # Extract the main body of text as HTML
-        doc = Document(response.read())
-        soup = BeautifulSoup(doc.summary(), features="lxml")
-
-        return soup.get_text()
 
 
 def extract_sentences(url):
