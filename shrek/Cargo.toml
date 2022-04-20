@@ -1,0 +1,22 @@
+[package]
+name = "shrek"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chatbot = { path = "../chatbot"}
+chrono = "0.4.19"
+dotenv = "0.15.0"
+eyre = "0.6.5"
+futures = "0.3.19"
+gh-emoji = "1.0.6"
+gpt2_client = { path = "../gpt2/client" }
+once_cell = "1.9.0"
+rand = "0.8.4"
+regex = "1.5.4"
+reqwest = "0.11.9"
+slack = { path = "../slack"}
+tokio = { version = "1.15.0", features = ["full"] }
+tracing = "0.1.29"
+tracing-subscriber = { version = "0.3.5", features = ["env-filter"] }
+uberduck = { path = "../uberduck"}

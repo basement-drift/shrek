@@ -1,0 +1,8 @@
+[workspace]
+members = [
+	"chatbot",
+	"shrek",
+	"slack",
+	"uberduck"
+]
+exclude = [ "./gpt2" ]
