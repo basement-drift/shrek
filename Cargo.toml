@@ -3,6 +3,10 @@ members = [
 	"chatbot",
 	"shrek",
 	"slack",
-	"uberduck"
+	"uberduck",
+
+	"website/api",
+	"website/backend",
+	"website/frontend"
 ]
 exclude = [ "./gpt2" ]
