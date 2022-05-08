@@ -1,25 +1,24 @@
 use eyre::{Result, WrapErr};
-use gpt2_proto::gpt2::GenerateRequest;
 use rust_bert::gpt2::GPT2Generator;
 use tracing::{debug, info};
 
-use crate::Receiver;
+use crate::{Message, Receiver};
 
 const MAX_SIZE: usize = 1024;
 
 // GPT2 generation loop. Enforces that only a single generation is running at once. Not async
 // (since rust-bert isn't async), and must be run in a blocking-safe task (e.g.
 // tokio::task::spawn_blocking).
-pub fn gpt2(mut rx: Receiver) -> Result<()> {
+pub(crate) fn gpt2(mut rx: Receiver) -> Result<()> {
     use rust_bert::pipelines::generation_utils::{GenerateOptions, LanguageGenerator};
 
     let generator = load_model()?;
     let tokenizer = generator.get_tokenizer();
 
-    while let Some((args, oneshot_tx)) = rx.blocking_recv() {
-        let (prompt, prompt_size) = truncate(tokenizer, &args);
+    while let Some(msg) = rx.blocking_recv() {
+        let (prompt, prompt_size) = truncate(tokenizer, &msg);
 
-        let max_length = Some((prompt_size + args.length as usize) as i64);
+        let max_length = Some((prompt_size + msg.length as usize) as i64);
 
         let mut gen = generator.generate_indices(
             Some(&[prompt]),
@@ -38,7 +37,7 @@ pub fn gpt2(mut rx: Receiver) -> Result<()> {
 
         let output = tokenizer.decode(&trimmed, true, true);
 
-        oneshot_tx.send(output).ok();
+        msg.responder.send(output).ok();
     }
 
     Ok(())
@@ -81,11 +80,11 @@ fn load_model() -> Result<GPT2Generator> {
 
 fn truncate<'a>(
     tokenizer: &rust_bert::pipelines::common::TokenizerOption,
-    args: &'a GenerateRequest,
+    msg: &'a Message,
 ) -> (&'a str, usize) {
-    let tokenized = tokenizer.tokenize_with_offsets(&args.prompt);
+    let tokenized = tokenizer.tokenize_with_offsets(&msg.prompt);
     let tok_size = tokenized.tokens.len();
-    let max_size = args.length as usize + tok_size;
+    let max_size = msg.length as usize + tok_size;
     let overflow = max_size.saturating_sub(MAX_SIZE);
 
     let offset = tokenized
@@ -99,5 +98,5 @@ fn truncate<'a>(
 
     debug!(%offset, "truncating text");
 
-    (&args.prompt[offset..], tok_size - overflow)
+    (&msg.prompt[offset..], tok_size - overflow)
 }
