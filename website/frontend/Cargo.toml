@@ -9,5 +9,5 @@ edition = "2021"
 futures = "0.3.21"
 gloo-console = "0.2.1"
 gloo-net = { version = "0.2.0", default-features = false, features = ["websocket"] }
-sycamore = { git = "https://github.com/sycamore-rs/sycamore", rev = "41fc140675389389b10d1175de260cf9f51ebb5d", features = ["suspense"] }
+sycamore = { git = "https://github.com/sycamore-rs/sycamore", rev = "5284b8de87fb731ea19642e81df370c178ebd159", features = ["suspense"] }
 web-sys = "0.3.57"

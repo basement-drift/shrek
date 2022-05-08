@@ -1,8 +1,7 @@
 use std::fmt;
 
 use futures::channel::mpsc;
-use futures::stream::SplitSink;
-use futures::{Sink, SinkExt, StreamExt};
+use futures::StreamExt;
 use gloo_console::log;
 use gloo_net::websocket;
 use gloo_net::websocket::futures::WebSocket;
@@ -30,8 +29,8 @@ fn main() {
         websocket(cx, history);
 
         view! { cx,
-            div(class="container is-max-desktop is-flex is-flex-direction-column", style="height: 100%") {
-                div(class="container is-flex is-flex-direction-column-reverse", style="width: 100%; overflow:auto") {
+            div(class="max-w-md mx-auto flex flex-col h-full") {
+                div(class="flex flex-col-reverse w-full h-full overflow-auto") {
                     List(history)
                 }
                 Input(history)
@@ -63,7 +62,7 @@ fn websocket<'a>(cx: Scope<'a>, history: &'a Signal<Vec<Message>>) {
             if let Ok(websocket::Message::Text(text)) = next {
                 history.modify().push(Message {
                     body: text,
-                    color: Color::Info,
+                    color: Color::Blue,
                     direction: Pull::Left,
                 });
             }
@@ -110,7 +109,7 @@ fn Input<'a, G: Html>(cx: Scope<'a>, history: &'a Signal<Vec<Message>>) -> View<
         if !trimmed.is_empty() {
             history.modify().push(Message {
                 body: trimmed,
-                color: Color::Empty,
+                color: Color::Grey,
                 direction: Pull::Right,
             });
         }
@@ -118,7 +117,7 @@ fn Input<'a, G: Html>(cx: Scope<'a>, history: &'a Signal<Vec<Message>>) -> View<
 
     view! { cx,
         form(class="field", on:submit=submit) {
-            input(class="input", type="text", bind:value=new_msg)
+            input(class="w-full rounded", type="text", bind:value=new_msg)
         }
     }
 }
@@ -126,18 +125,14 @@ fn Input<'a, G: Html>(cx: Scope<'a>, history: &'a Signal<Vec<Message>>) -> View<
 #[component]
 fn List<'a, G: Html>(cx: Scope<'a>, history: &'a ReadSignal<Vec<Message>>) -> View<G> {
     view! { cx,
-        // The `p-3` padding override is necessary to work around an apparent bug in bulma columns.
-        // Without it, there is a slight horizontal overflow and scroll.
-        ul(class="p-3") {
+        ul(class="p-3 grid grid-cols-12 gap-4") {
             // TODO: the iteration code is pretty beefy, and checks a bunch of stuff we don't care
             // about (our old messages never change). Is there a way to not use it that would
             // actually be more lightweight?
             Indexed {
                 iterable: history,
                 view: |cx, x| view! { cx,
-                    li(class="columns is-mobile") {
-                        Bubble(x)
-                    }
+                    Bubble(x)
                 }
             }
         }
@@ -153,8 +148,8 @@ enum Pull {
 impl fmt::Display for Pull {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let pull = match self {
-            Pull::Left => "is-pulled-left",
-            Pull::Right => "is-pulled-right",
+            Pull::Left => "justify-self-start",
+            Pull::Right => "justify-self-end",
         };
 
         write!(f, "{pull}")
@@ -163,25 +158,20 @@ impl fmt::Display for Pull {
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum Color {
-    Empty,
-    Primary,
-    Link,
-    Info,
-    Success,
-    Warning,
-    Danger,
+    Grey,
+    Blue,
 }
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let class = match self {
-            Color::Empty => "",
-            Color::Primary => "is-primary",
-            Color::Link => "is-link",
-            Color::Info => "is-info",
-            Color::Success => "is-success",
-            Color::Warning => "is-warning",
-            Color::Danger => "is-danger",
+            Color::Grey => "bg-slate-300",
+            //Color::Primary => "bg-teal-400",
+            //Color::Link => "bg-blue-600",
+            Color::Blue => "bg-blue-500 text-white",
+            //Color::Success => "bg-green-400",
+            //Color::Warning => "bg-yellow-300",
+            //Color::Danger => "bg-red-500",
         };
 
         write!(f, "{class}")
@@ -191,17 +181,18 @@ impl fmt::Display for Color {
 #[component]
 fn Bubble<G: Html>(cx: Scope, props: Message) -> View<G> {
     let position = match props.direction {
-        Pull::Left => "is-11",
-        Pull::Right => "is-11 is-offset-1",
+        Pull::Left => "col-span-11",
+        Pull::Right => "col-start-2 col-span-11",
     };
 
-    let class = format!("notification {} {}", props.color, props.direction);
+    let class = format!(
+        "rounded-lg p-2 {} {} {}",
+        position, props.color, props.direction
+    );
 
     view! { cx,
-        div(class=format!("column {position}")) {
-            div(class=(class)) {
-                p { (props.body) }
-            }
+        li(class=(class)) {
+            p { (props.body) }
         }
     }
 }
