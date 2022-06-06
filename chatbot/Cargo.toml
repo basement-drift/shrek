@@ -10,7 +10,7 @@ slack = { path = "../slack" }
 
 async-trait = "0.1.52"
 futures = "0.3.19"
-regex = "1.5.4"
+regex = "1.5.5"
 thiserror = "1.0.30"
 tokio = { version = "1.15.0", features = ["sync", "rt"] }
 tokio-stream = { version = "0.1.8", features = ["sync"] }
