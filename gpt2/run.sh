@@ -15,6 +15,7 @@ docker run -it \
     --init \
     -v "${GPT2_CACHE_DIR}:/cache" \
     -e APP_PORT=50080 \
+    -e APP_ADDR="0.0.0.0" \
     -e HSA_ENABLE_SDMA=${HSA_ENABLE_SDMA:-1} \
     --name gpt2_server \
     gpt2_server:latest
