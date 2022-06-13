@@ -1,5 +1,6 @@
 use eyre::{Result, WrapErr};
 use rust_bert::gpt2::GPT2Generator;
+use rust_bert::pipelines::common::TokenizerOption;
 use tracing::{debug, info};
 
 use crate::{Message, Receiver};
@@ -17,6 +18,7 @@ pub(crate) fn gpt2(mut rx: Receiver) -> Result<()> {
 
     while let Some(msg) = rx.blocking_recv() {
         let (prompt, prompt_size) = truncate(tokenizer, &msg);
+        debug!(%prompt_size, "final size");
 
         let max_length = Some((prompt_size + msg.length as usize) as i64);
 
@@ -78,36 +80,29 @@ fn load_model() -> Result<GPT2Generator> {
     Ok(generator)
 }
 
-fn truncate<'a>(
-    tokenizer: &rust_bert::pipelines::common::TokenizerOption,
-    msg: &'a Message,
-) -> (&'a str, usize) {
-    let tokenized = tokenizer.tokenize_with_offsets(&msg.prompt);
-    let tok_size = tokenized.tokens.len();
-    let max_size = msg.length as usize + tok_size;
-    let overflow = max_size.saturating_sub(MAX_SIZE);
+fn truncate<'a>(tokenizer: &TokenizerOption, msg: &'a Message) -> (&'a str, usize) {
+    let mut offset: usize = 0;
 
-    let offset = tokenized
-        .offsets
-        .into_iter()
-        .flatten()
-        .nth(overflow)
-        .map(|o| o.begin)
-        .unwrap_or(0) as usize;
+    loop {
+        let prompt = &msg.prompt[offset..];
 
-    if offset == 0 {
-        return (&msg.prompt, tok_size);
+        let tokenized = tokenizer.tokenize_with_offsets(prompt);
+        let tok_size = tokenized.tokens.len();
+        let max_size = msg.length as usize + tok_size;
+        let overflow = max_size.saturating_sub(MAX_SIZE);
+
+        debug!(%offset, %tok_size, %overflow, "truncating text");
+
+        offset = tokenized
+            .offsets
+            .into_iter()
+            .flatten()
+            .nth(overflow)
+            .map(|o| o.begin)
+            .unwrap_or(0) as usize;
+
+        if offset == 0 {
+            return (prompt, tok_size);
+        }
     }
-
-    debug!(%offset, %overflow, "truncating text");
-
-    // Re-tokenize to get the new prompt size
-    // TODO: can we avoid this?
-    let trunc_prompt = &msg.prompt[offset..];
-    let tokenized = tokenizer.tokenize_with_offsets(trunc_prompt);
-    let trunc_tok_size = tokenized.tokens.len();
-
-    debug!(%tok_size, %trunc_tok_size, "truncated");
-
-    (trunc_prompt, trunc_tok_size)
 }
