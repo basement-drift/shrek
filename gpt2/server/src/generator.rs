@@ -96,7 +96,17 @@ fn truncate<'a>(
         .map(|o| o.begin)
         .unwrap_or(0) as usize;
 
-    debug!(%offset, "truncating text");
+    debug!(%offset, %overflow, "truncating text");
 
-    (&msg.prompt[offset..], tok_size - overflow)
+    if offset == 0 {
+        return (&msg.prompt, tok_size)
+    }
+
+    // Re-tokenize to get the new prompt size
+    // TODO: can we avoid this?
+    let trunc_prompt = &msg.prompt[offset..];
+    let tokenized = tokenizer.tokenize_with_offsets(trunc_prompt);
+    let tok_size = tokenized.tokens.len();
+
+    (trunc_prompt, tok_size)
 }
