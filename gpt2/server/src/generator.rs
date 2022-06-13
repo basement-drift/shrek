@@ -90,14 +90,13 @@ fn truncate<'a>(
     let offset = tokenized
         .offsets
         .into_iter()
-        .skip(overflow)
-        .find(|o| o.is_some())
         .flatten()
+        .nth(overflow)
         .map(|o| o.begin)
         .unwrap_or(0) as usize;
 
     if offset == 0 {
-        return (&msg.prompt, tok_size)
+        return (&msg.prompt, tok_size);
     }
 
     debug!(%offset, %overflow, "truncating text");
