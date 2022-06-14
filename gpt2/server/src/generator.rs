@@ -81,28 +81,22 @@ fn load_model() -> Result<GPT2Generator> {
 }
 
 fn truncate<'a>(tokenizer: &TokenizerOption, msg: &'a Message) -> (&'a str, usize) {
-    let mut prompt = msg.prompt.as_str();
+    let tokenized = tokenizer.tokenize_with_offsets(&msg.prompt);
+    let tok_size = tokenized.tokens.len();
+    let req_size = msg.length as usize + tok_size;
+    let overflow = req_size.saturating_sub(MAX_SIZE);
 
-    loop {
-        let tokenized = tokenizer.tokenize_with_offsets(prompt);
-        let tok_size = tokenized.tokens.len();
-        let max_size = msg.length as usize + tok_size;
-        let overflow = max_size.saturating_sub(MAX_SIZE);
+    debug!(%tok_size, %overflow, "truncating text");
 
-        debug!(%tok_size, %overflow, "truncating text");
+    let offset = tokenized
+        .offsets
+        .into_iter()
+        .flatten()
+        .nth(overflow)
+        .map(|o| o.begin)
+        .unwrap_or(0) as usize;
 
-        let offset = tokenized
-            .offsets
-            .into_iter()
-            .flatten()
-            .nth(overflow)
-            .map(|o| o.begin)
-            .unwrap_or(0) as usize;
+    let (byte_offset, _) = msg.prompt.char_indices().nth(offset).unwrap_or((0, ' '));
 
-        if offset == 0 {
-            return (prompt, tok_size);
-        }
-
-        prompt = &prompt[offset..];
-    }
+    (&msg.prompt[byte_offset..], req_size - overflow)
 }
