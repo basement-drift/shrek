@@ -75,7 +75,11 @@ impl proto::Gpt2 for Gpt2 {
 
         info!(length=%payload.length, prompt=%payload.script, speaker=%payload.next_speaker, "new script request");
 
-        let prompt = format!("{}\n{}: ", payload.script, payload.next_speaker);
+        let prompt = format!(
+            "{}\n{}: ",
+            payload.script,
+            payload.next_speaker.to_uppercase()
+        );
 
         gen_tx
             .send(Message {
@@ -95,13 +99,19 @@ impl proto::Gpt2 for Gpt2 {
 
         info!(%text, "gpt2 text generated");
 
-        let raw = strip_trailing_thoughts(&text);
+        let raw = strip_weird_unicode(&text);
+        let raw = strip_trailing_thoughts(&raw);
         let clean = strip_incomplete_sentences(raw);
 
         Ok(Response::new(GeneratedText {
             text: clean.to_string(),
         }))
     }
+}
+
+fn strip_weird_unicode(input: &str) -> Cow<'_, str> {
+    let re = Lazy::new(|| Regex::new("\u{202a}").unwrap());
+    re.replace_all(input, " ")
 }
 
 // Remove any trailing incomplete sentences, while allowing a standalone sentence fragment
