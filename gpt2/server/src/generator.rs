@@ -98,5 +98,5 @@ fn truncate<'a>(tokenizer: &TokenizerOption, msg: &'a Message) -> (&'a str, usiz
 
     let (byte_offset, _) = msg.prompt.char_indices().nth(offset).unwrap_or((0, ' '));
 
-    (&msg.prompt[byte_offset..], req_size - overflow)
+    (&msg.prompt[byte_offset..], tok_size - overflow)
 }
