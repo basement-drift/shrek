@@ -97,7 +97,7 @@ impl proto::Gpt2 for Gpt2 {
             Status::internal("internal processing loop failed to reply")
         })?;
 
-        info!(%text, "gpt2 text generated");
+        info!(?text, "gpt2 text generated");
 
         let raw = strip_weird_unicode(&text);
         let raw = strip_trailing_thoughts(&raw);
