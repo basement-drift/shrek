@@ -83,12 +83,18 @@ impl Gpt2 {
             .into_inner()
             .text;
 
-        debug!(%text, "gpt2 text generated");
+        debug!(?text, "gpt2 text generated");
 
-        let raw = strip_trailing_thoughts(&text);
+        let raw = strip_weird_unicode(&text);
+        let raw = strip_trailing_thoughts(&raw);
         let clean = strip_incomplete_sentences(raw);
         Ok(clean.to_string())
     }
+}
+
+fn strip_weird_unicode(input: &str) -> Cow<'_, str> {
+    let re = Lazy::new(|| Regex::new("\u{202a}").unwrap());
+    re.replace_all(input, " ")
 }
 
 // Does the input contain a reply trigger?
