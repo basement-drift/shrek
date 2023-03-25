@@ -1,7 +1,7 @@
 use chatbot::Chatbot;
-use chrono::{prelude::*, Duration};
 use futures::{stream, StreamExt};
 use rand::prelude::*;
+use time::{Duration, OffsetDateTime};
 use tracing::trace;
 
 pub fn add(bot: &Chatbot) {
@@ -30,7 +30,7 @@ pub fn add(bot: &Chatbot) {
 }
 
 struct EmojiCache {
-    age: DateTime<Utc>,
+    age: OffsetDateTime,
     emoji: Vec<String>,
     slack: slack::Client,
 }
@@ -38,7 +38,7 @@ struct EmojiCache {
 impl EmojiCache {
     fn new(slack: slack::Client) -> EmojiCache {
         EmojiCache {
-            age: chrono::MIN_DATETIME,
+            age: OffsetDateTime::UNIX_EPOCH,
             emoji: vec![],
             slack,
         }
@@ -47,7 +47,7 @@ impl EmojiCache {
     async fn choose(&mut self) -> &str {
         if self.expired() {
             self.emoji = Self::fetch(&self.slack).await;
-            self.age = Utc::now();
+            self.age = OffsetDateTime::now_utc();
         }
 
         self.emoji.choose(&mut thread_rng()).unwrap()
@@ -65,6 +65,6 @@ impl EmojiCache {
     }
 
     fn expired(&self) -> bool {
-        (Utc::now() - self.age) > Duration::hours(1)
+        (OffsetDateTime::now_utc() - self.age) > Duration::hours(1)
     }
 }
